@@ -10,11 +10,11 @@ app = dash.Dash(__name__)
 ROOT_DATA_DIR = r'C:\Users\bunny\Desktop\doi_10.5061_dryad.6wwpzgn2c__v8'
 
 disambiguated_df = pd.read_csv(
-    ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv.gz',
+    ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv',
     sep='\t',
     engine='python',
-    compression='gzip',
-    nrows=1000000
+    # compression='gzip',
+    nrows=2000000
 )
 
 disambiguated_df['mapped_to_software'] = disambiguated_df.apply(
