@@ -9,18 +9,22 @@ app = dash.Dash(__name__)
 # data processing
 ROOT_DATA_DIR = r'C:\Users\bunny\Desktop\doi_10.5061_dryad.6wwpzgn2c__v8'
 
+using_sample = True
+file_path = ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv'
+if using_sample:
+    file_path = file_path[:-4] + '_sample.tsv'
+
 disambiguated_df = pd.read_csv(
-    ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv',
+    file_path,
     sep='\t',
     engine='python',
     # compression='gzip',
-    nrows=2000000
+    # nrows=2000000
 )
 
-disambiguated_df['mapped_to_software'] = disambiguated_df.apply(
-    lambda x: x['software'] if x['mapped_to_software'] == 'not_disambiguated' else x['mapped_to_software'],
-    axis=1
-)
+# filter ['mapped_to_software'] != 'not_disambiguated' and ['curation_label'] != 'not_software'
+disambiguated_df = disambiguated_df[disambiguated_df['mapped_to_software'] != 'not_disambiguated']
+disambiguated_df = disambiguated_df[disambiguated_df['curation_label'] != 'not_software']
 
 disambiguated_df['year'] = disambiguated_df['pubdate'].astype(str).str[:4].astype(int, errors='ignore')
 disambiguated_df['year'] = disambiguated_df['year'].dropna().astype(int)
@@ -36,10 +40,12 @@ def create_sankey(df, selected_N):
         softwares = group['mapped_to_software'].unique()
         for i in range(len(softwares)):
             for j in range(i+1, len(softwares)):
-                if (softwares[i], softwares[j]) not in connections:
-                    connections[(softwares[i], softwares[j])] = 1
+                # Ensure the smaller software name comes first in the tuple
+                software_pair = tuple(sorted((softwares[i], softwares[j])))
+                if software_pair not in connections:
+                    connections[software_pair] = 1
                 else:
-                    connections[(softwares[i], softwares[j])] += 1
+                    connections[software_pair] += 1
 
     # Convert connections to a DataFrame
     connections_df = pd.DataFrame(list(connections.items()), columns=['Connection', 'Count'])
@@ -111,10 +117,10 @@ app.layout = html.Div([
         dcc.RangeSlider(
             id='year-slider',
             min=1970,
-            max=max_year,
+            max=2021,
             step=1,
-            marks={i: str(i) for i in range(min_year, max_year + 1, 5)},
-            value=[2000, max_year]  # default value
+            marks={i: str(i) for i in range(1970, 2021 + 1, 5)},
+            value=[1995, max_year]  # default value
         )
     ], style={'padding': '10px', 'boxShadow': '0px 0px 5px #ccc', 'borderRadius': '5px', 'marginBottom': '20px'}),
 
