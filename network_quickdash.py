@@ -43,11 +43,21 @@ def create_network(connections_df, selected_N):
     
     # Compute the size of nodes based on the total connection count
     node_sizes = []
+    node_labels = []
     for node in G.vs:
         in_edges = G.es.select(_target_in=[node.index])
         out_edges = G.es.select(_source_in=[node.index])
         total_weight = sum(in_edges['weight']) + sum(out_edges['weight'])
         node_sizes.append(np.sqrt(total_weight) * 0.7)  # Adjust size multiplier as needed
+        node_labels.append(node['name'])
+
+    label_trace = go.Scatter(
+        x=node_x, y=node_y,
+        text=node_labels,
+        textposition="top center",
+        mode='text',
+        hoverinfo='none'
+    )
     
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -73,7 +83,9 @@ def create_network(connections_df, selected_N):
     
     # Normalize edge weights to range [0, 1]
     edge_weights = np.array(G.es['weight'])
-    normalized_weights = (edge_weights - min(edge_weights)) / (max(edge_weights) - min(edge_weights))
+    edge_weight_range = max(edge_weights) - min(edge_weights)
+    normalized_weights = (edge_weights - min(edge_weights)) / (edge_weight_range if edge_weight_range != 0 else 1)
+
     min_alpha = 0.1  # Set minimum alpha for visibility
     alpha_range = 0.9  # Set the range of alpha values
     
@@ -99,7 +111,7 @@ def create_network(connections_df, selected_N):
         traces.append(edge_trace)
 
     # Create a Plotly figure
-    fig = go.Figure(data=traces + [node_trace],  # Add all edge traces and the node trace
+    fig = go.Figure(data=traces + [node_trace, label_trace],  # Add all edge traces and the node trace
              layout=go.Layout(
                 showlegend=False,
                 hovermode='closest',
