@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import json
 import numpy as np
-import networkx as nx
+import igraph as ig
 
 app = dash.Dash(__name__)
 
@@ -15,11 +15,6 @@ with open('sankey_data.json', 'r') as f:
 
 min_year = min(map(int, sankey_data.keys()))
 max_year = max(map(int, sankey_data.keys()))
-
-import igraph as ig
-import pandas as pd
-import plotly.graph_objects as go
-import numpy as np
 
 def create_network(connections_df, selected_N):
     # Ensure the 'Count' column is of numeric type
