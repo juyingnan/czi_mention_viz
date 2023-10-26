@@ -110,8 +110,28 @@ def create_network(connections_df, selected_N):
         
         traces.append(edge_trace)
 
+    hover_x = []
+    hover_y = []
+    hover_text = []
+    for edge, weight in zip(G.es, edge_weights):
+        source_idx, target_idx = edge.tuple
+        x0, y0 = layout.coords[source_idx]
+        x1, y1 = layout.coords[target_idx]
+        hover_x.append((x0 + x1) / 2)
+        hover_y.append((y0 + y1) / 2)
+        hover_text.append(f'Connections: {edge["weight"]}')
+
+    # Creating a trace for edge hover points
+    hover_trace = go.Scatter(
+        x=hover_x, y=hover_y,
+        text=hover_text,
+        mode='markers',
+        hoverinfo='text',
+        marker=dict(color='rgba(0,0,0,0)', size=5),
+    )
+
     # Create a Plotly figure
-    fig = go.Figure(data=traces + [node_trace, label_trace],  # Add all edge traces and the node trace
+    fig = go.Figure(data=traces + [node_trace, label_trace, hover_trace],  # Add all edge traces and the node trace
              layout=go.Layout(
                 showlegend=False,
                 hovermode='closest',
