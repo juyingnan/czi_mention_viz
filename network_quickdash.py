@@ -49,8 +49,7 @@ def create_network(connections_df, selected_N):
         mode='markers',
         hoverinfo='text',
         marker=dict(
-            showscale=True,
-            colorscale='YlGnBu',
+            showscale=False,
             size=degrees,
             colorbar=dict(
                 thickness=15,
@@ -67,26 +66,35 @@ def create_network(connections_df, selected_N):
     
     node_trace.text = node_text
     
-    edge_x = []
-    edge_y = []
-    for edge in G.es:
-        source_idx, target_idx = edge.tuple
-        edge_x.append(layout.coords[source_idx][0])
-        edge_x.append(layout.coords[target_idx][0])
-        edge_x.append(None)
-        edge_y.append(layout.coords[source_idx][1])
-        edge_y.append(layout.coords[target_idx][1])
-        edge_y.append(None)
-        
-    edge_trace = go.Scatter(
-        x=edge_x, y=edge_y,
-        line=dict(width=0.5, color='#888'),
-        hoverinfo='none',
-        mode='lines'
-    )
+    # Normalize edge weights to range [0, 1]
+    edge_weights = np.array(G.es['weight'])
+    normalized_weights = (edge_weights - min(edge_weights)) / (max(edge_weights) - min(edge_weights))
+    min_alpha = 0.1  # Set minimum alpha for visibility
+    alpha_range = 0.9  # Set the range of alpha values
     
+    traces = []  # List to store all the traces
+    
+    for edge, weight in zip(G.es, normalized_weights):
+        source_idx, target_idx = edge.tuple
+        edge_x = [layout.coords[source_idx][0], layout.coords[target_idx][0]]
+        edge_y = [layout.coords[source_idx][1], layout.coords[target_idx][1]]
+        
+        alpha = min_alpha + alpha_range * weight  # Ensure a minimum alpha for visibility
+        thickness = 1 + 9 * weight  # Adjust thickness based on weight, e.g., from 1 to 10
+        
+        # Create a trace for each edge
+        edge_trace = go.Scatter(
+            x=edge_x, y=edge_y,
+            line=dict(width=thickness, color=f'rgba(0, 0, 0, {alpha})'),
+            hoverinfo='text',
+            text=f'Connections: {edge["weight"]}',  # Hover text
+            mode='lines'
+        )
+        
+        traces.append(edge_trace)
+
     # Create a Plotly figure
-    fig = go.Figure(data=[edge_trace, node_trace],
+    fig = go.Figure(data=traces + [node_trace],  # Add all edge traces and the node trace
              layout=go.Layout(
                 showlegend=False,
                 hovermode='closest',
