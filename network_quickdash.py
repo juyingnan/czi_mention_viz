@@ -1,6 +1,6 @@
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objects as go
 import json
@@ -16,7 +16,7 @@ with open('sankey_data.json', 'r') as f:
 min_year = min(map(int, sankey_data.keys()))
 max_year = max(map(int, sankey_data.keys()))
 
-def create_network(connections_df, selected_N):
+def create_network(connections_df, selected_N, year_range):
     # Ensure the 'Count' column is of numeric type
     connections_df['Count'] = pd.to_numeric(connections_df['Count'], errors='coerce')
     
@@ -148,9 +148,25 @@ def create_network(connections_df, selected_N):
                 hovermode='closest',
                 margin=dict(b=0,l=0,r=0,t=0),
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                annotations=[
+                            dict(
+                                x=0.025,
+                                y=0.025,
+                                xref='paper',
+                                yref='paper',
+                                showarrow=False,
+                                text=f'Year Range: {year_range[0]} - {year_range[1]}',
+                                font=dict(size=20),
+                                align='center',
+                            )
+                        ]
+                    )
                 )
     return fig
+
+    
+
 
 @app.callback(
     Output('software-connections', 'figure'),
@@ -167,7 +183,37 @@ def update_graph(selected_N, year_range):
             combined_connections = pd.concat([combined_connections, year_connections])
     
     combined_connections = combined_connections.groupby(['Source', 'Target'], as_index=False).sum()
-    return create_network(combined_connections, selected_N)
+    return create_network(combined_connections, selected_N, year_range)
+
+# Play/pause animation callback
+@app.callback(
+    [Output('interval-component', 'disabled'),
+     Output('play-button', 'children')],
+    Input('play-button', 'n_clicks'),
+    State('interval-component', 'disabled'),
+)
+def play_pause_animation(n_clicks, is_disabled):
+    if n_clicks is None or n_clicks == 0:
+        # On initial load, don't update anything
+        raise dash.exceptions.PreventUpdate
+    # Toggle the 'disabled' property of the interval component
+    new_disabled_state = not is_disabled
+    # Set button label to "Play" if the animation will be stopped, and "Stop" if it will be running
+    button_label = "Play" if new_disabled_state else "Stop"
+    return new_disabled_state, button_label
+
+
+@app.callback(
+    Output('year-slider', 'value'),
+    Input('interval-component', 'n_intervals'),
+    State('year-slider', 'value'),
+)
+def update_slider(n_intervals, current_year_range):
+    max_year = 2021  # Replace with your max year
+    if current_year_range[1] < max_year:
+        return [current_year_range[0], current_year_range[1] + 1]
+    else:
+        return [current_year_range[0], max_year]
 
 # Dash app layout
 app.layout = html.Div([
@@ -191,13 +237,21 @@ app.layout = html.Div([
     html.Div([
         dcc.RangeSlider(
             id='year-slider',
-            min=1970,
+            min=1990,
             max=2021,
             step=1,
-            marks={i: str(i) for i in range(1970, 2021 + 1, 5)},
+            marks={i: str(i) for i in range(1990, 2021 + 1, 5)},
             value=[1995, max_year]  # default value
         )
     ], style={'padding': '10px', 'boxShadow': '0px 0px 5px #ccc', 'borderRadius': '5px', 'marginBottom': '20px'}),
+
+    html.Button('Play', id='play-button', n_clicks=0),
+    dcc.Interval(
+        id='interval-component',
+        interval=5*1000,  # in milliseconds
+        n_intervals=0,
+        disabled=True,  # disabled on start
+    ),
 
     dcc.Graph(
         id='software-connections',
