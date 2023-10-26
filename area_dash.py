@@ -9,18 +9,22 @@ app = dash.Dash(__name__)
 # data processing
 ROOT_DATA_DIR = r'C:\Users\bunny\Desktop\doi_10.5061_dryad.6wwpzgn2c__v8'
 
+using_sample = True
+file_path = ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv'
+if using_sample:
+    file_path = file_path[:-4] + '_sample.tsv'
+
 disambiguated_df = pd.read_csv(
-    ROOT_DATA_DIR + '/disambiguated/comm_disambiguated.tsv',
+    file_path,
     sep='\t',
     engine='python',
     # compression='gzip',
-    nrows=2000000
+    # nrows=2000000
 )
 
-disambiguated_df['mapped_to_software'] = disambiguated_df.apply(
-    lambda x: x['software'] if x['mapped_to_software'] == 'not_disambiguated' else x['mapped_to_software'],
-    axis=1
-)
+# filter ['mapped_to_software'] != 'not_disambiguated' and ['curation_label'] != 'not_software'
+disambiguated_df = disambiguated_df[disambiguated_df['mapped_to_software'] != 'not_disambiguated']
+disambiguated_df = disambiguated_df[disambiguated_df['curation_label'] != 'not_software']
 
 disambiguated_df['year'] = disambiguated_df['pubdate'].astype(str).str[:4].astype(int, errors='ignore')
 
@@ -93,7 +97,7 @@ app.layout = html.Div([
                     {'label': 'Absolute', 'value': 'absolute'},
                     {'label': 'Percentage', 'value': 'percentage'}
                 ],
-                value='absolute',  # default value
+                value='percentage',  # default value
             )
         ], style={'width': '24%', 'display': 'inline-block', 'padding': '10px', 'boxShadow': '0px 0px 5px #ccc', 'borderRadius': '5px', 'marginLeft': '5px'}),
     ], style={'marginBottom': '10px'}),
@@ -102,16 +106,16 @@ app.layout = html.Div([
         dcc.RangeSlider(
             id='year-slider',
             min=1970,
-            max=2023,
+            max=2021,
             step=1,
-            marks={i: str(i) for i in range(1970, 2024, 5)},
-            value=[2000, 2023]  # default value
+            marks={i: str(i) for i in range(1970, 2022, 5)},
+            value=[1995, 2021]  # default value
         )
     ], style={'padding': '10px', 'boxShadow': '0px 0px 5px #ccc', 'borderRadius': '5px', 'marginBottom': '20px'}),
 
 dcc.Graph(
         id='software-trend',
-        figure=update_figure(25, 'absolute', [2000, 2023]),
+        figure=update_figure(25, 'percentage', [1995, 2021]),
         style={'height': '70vh'}  # Set the height of the graph
     ),
 ], style={'padding': '10px', 'height': '100vh', 'margin': '0'})
