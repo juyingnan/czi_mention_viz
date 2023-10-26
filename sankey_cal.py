@@ -4,7 +4,7 @@ import json
 # Data processing
 ROOT_DATA_DIR = r'C:\Users\bunny\Desktop\doi_10.5061_dryad.6wwpzgn2c__v8'
 
-using_sample = 1
+using_sample = 3
 file_name = '/disambiguated/comm_disambiguated.tsv'
 if using_sample != 1:
     file_name = file_name[:-4] + f'_sample{using_sample}.tsv'
