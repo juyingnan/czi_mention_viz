@@ -65,7 +65,7 @@ def create_network(connections_df, selected_N):
         hoverinfo='text',
         marker=dict(
             showscale=True,
-            colorscale='Viridis',
+            colorscale='Burg',
             size=node_sizes,  # Set node sizes based on total connection count
             colorbar=dict(
                 thickness=15,
@@ -82,7 +82,7 @@ def create_network(connections_df, selected_N):
     node_trace.marker.color = node_degrees
     node_trace.marker.cmin = min(node_degrees)
     node_trace.marker.cmax = max(node_degrees)
-    node_trace.marker.colorbar.title = 'Number of Connections'
+    node_trace.marker.colorbar.title = 'Connections'
     node_trace.marker.colorbar.tickvals = [min(node_degrees), max(node_degrees)]
     node_trace.marker.colorbar.ticktext = [min(node_degrees), max(node_degrees)]
     
