@@ -64,20 +64,31 @@ def create_network(connections_df, selected_N):
         mode='markers',
         hoverinfo='text',
         marker=dict(
-            showscale=False,
+            showscale=True,
+            colorscale='Viridis',
             size=node_sizes,  # Set node sizes based on total connection count
             colorbar=dict(
                 thickness=15,
-                title='Node Connections',
+                title='Connections',
                 xanchor='left',
                 titleside='right'
             )
         )
     )
+
+    # Calculate the degree of each node
+    node_degrees = np.array(G.degree())
+
+    node_trace.marker.color = node_degrees
+    node_trace.marker.cmin = min(node_degrees)
+    node_trace.marker.cmax = max(node_degrees)
+    node_trace.marker.colorbar.title = 'Number of Connections'
+    node_trace.marker.colorbar.tickvals = [min(node_degrees), max(node_degrees)]
+    node_trace.marker.colorbar.ticktext = [min(node_degrees), max(node_degrees)]
     
     node_text = []
     for node in G.vs:
-        node_text.append(f'{node["name"]}<br># of connections: {G.degree(node.index)}')
+        node_text.append(f'{node["name"]}<br># of connections: {G.degree(node.index)}<br>Total connections: {sum(G.es.select(_source_in=[node.index])["weight"]) + sum(G.es.select(_target_in=[node.index])["weight"])}')
     
     node_trace.text = node_text
     
