@@ -33,7 +33,7 @@ def create_network(connections_df, selected_N):
     
     for index, row in top_connections.iterrows():
         G.add_edge(row['Source'], row['Target'], weight=row['Count'])
-    
+   
     # Compute the layout of the graph
     layout = G.layout('kk')  # Kamada-Kawai layout
     
@@ -41,8 +41,13 @@ def create_network(connections_df, selected_N):
     node_x = [pos[0] for pos in layout.coords]
     node_y = [pos[1] for pos in layout.coords]
     
-    # Compute the size of nodes based on their degree
-    degrees = np.sqrt(np.array(G.degree())) * 10  # Adjust size multiplier as needed
+    # Compute the size of nodes based on the total connection count
+    node_sizes = []
+    for node in G.vs:
+        in_edges = G.es.select(_target_in=[node.index])
+        out_edges = G.es.select(_source_in=[node.index])
+        total_weight = sum(in_edges['weight']) + sum(out_edges['weight'])
+        node_sizes.append(np.sqrt(total_weight) * 0.7)  # Adjust size multiplier as needed
     
     node_trace = go.Scatter(
         x=node_x, y=node_y,
@@ -50,7 +55,7 @@ def create_network(connections_df, selected_N):
         hoverinfo='text',
         marker=dict(
             showscale=False,
-            size=degrees,
+            size=node_sizes,  # Set node sizes based on total connection count
             colorbar=dict(
                 thickness=15,
                 title='Node Connections',
@@ -156,7 +161,6 @@ app.layout = html.Div([
         style={'height': '70vh'}  # Set the height of the graph
     ),
 ], style={'padding': '10px', 'height': '100vh', 'margin': '0'})
-
 
 if __name__ == '__main__':
     app.run_server(debug=False, port=8052)
