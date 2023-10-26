@@ -14,7 +14,7 @@ disambiguated_df = pd.read_csv(
     sep='\t',
     engine='python',
     # compression='gzip',
-    # nrows=1000000
+    nrows=2000000
 )
 
 disambiguated_df['mapped_to_software'] = disambiguated_df.apply(
@@ -125,4 +125,4 @@ app.layout = html.Div([
 ], style={'padding': '10px', 'height': '100vh', 'margin': '0'})
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=False, port=8051)
